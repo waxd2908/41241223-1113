@@ -131,6 +131,32 @@
         document.getElementById("user-info").style.display = "block";
       });
     }
+    function formatDate(date) {
+      const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0'); // Add leading zero
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+      }
+
+    function displayUserData(user) {
+      database.ref('users/' + user.uid).once('value').then(snapshot => {
+        const data = snapshot.val();
+        document.getElementById("userName").innerText = `姓名: ${data.name}`;
+        document.getElementById("userEmail").innerText = `Email: ${data.email}`;
+        document.getElementById("userPhoto").src = data.photoURL;
+        
+        // Format the last login time using custom format
+        const formattedLastLogin = formatDate(data.lastLogin);
+        document.getElementById("lastLogin").innerText = `最後登入時間: ${formattedLastLogin}`;
+        
+        document.getElementById("user-info").style.display = "block";
+      });
+    }
+
   </script>
 </body>
 </html>
