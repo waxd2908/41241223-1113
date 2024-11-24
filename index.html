@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google 認證與會員系統</title>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-database-compat.js"></script>
+  <style>
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      margin-top: 50px;
+    }
+    .tab {
+      display: flex;
+      width: 200px;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .tab button {
+      width: 48%;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .auth-section {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .auth-section button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    #user-info {
+      text-align: center;
+      display: none;
+    }
+    #userPhoto {
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="tab">
+      <button onclick="selectTab('register')">註冊</button>
+      <button onclick="selectTab('login')">登入</button>
+    </div>
+    <div class="auth-section">
+      <button onclick="authenticateWithGoogle()">認證</button>
+    </div>
+    <div id="user-info">
+      <p id="userName">姓名: </p>
+      <p id="userEmail">Email: </p>
+      <img id="userPhoto" alt="User Photo" width="100" />
+      <p id="lastLogin">最後登入時間: </p>
+    </div>
+  </div>
+
+  <script>
+    // Firebase 初始化
+    const firebaseConfig = {
+      apiKey: "AIzaSyDcaCg9G3TRz1dJAb5ixmAAnhmT-1gALHc",
+      authDomain: "sample-firebase-ai-app2-1772f.firebaseapp.com",
+      databaseURL: "https://sample-firebase-ai-app2-1772f-default-rtdb.firebaseio.com",
+      projectId: "sample-firebase-ai-app2-1772f",
+      storageBucket: "sample-firebase-ai-app2-1772f.firebasestorage.app",
+      messagingSenderId: "824252885125",
+      appId: "1:824252885125:web:347ed0836149b7ea3aa1ec"
+    };
+    console.log(firebase.SDK_VERSION);
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+    const provider = new firebase.auth.GoogleAuthProvider();
+    
+    let currentMode = "register";  // 預設為註冊模式
+
+    function selectTab(mode) {
+      currentMode = mode;
+      console.log(`目前模式: ${mode === 'register' ? '註冊' : '登入'}`);
+    }
+
+    function authenticateWithGoogle() {
+      console.log("認證中...");
+      auth.signInWithPopup(provider)
+        .then(result => {
+          console.log("認證成功:", result);
+          const user = result.user;
+          if (currentMode === "register") {
+            saveUserData(user);
+          } else {
+            updateLastLogin(user);
+          }
+          displayUserData(user);
+        })
+        
+    }
+
+    function saveUserData(user) {
+      const userData = {
+        name: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        lastLogin: new Date().toISOString()
+      };
+      database.ref('users/' + user.uid).set(userData);
+    }
+
+    function updateLastLogin(user) {
+      database.ref('users/' + user.uid).update({
+        lastLogin: new Date().toISOString()
+      });
+    }
+
+    function displayUserData(user) {
+      database.ref('users/' + user.uid).once('value').then(snapshot => {
+        const data = snapshot.val();
+        document.getElementById("userName").innerText = `姓名: ${data.name}`;
+        document.getElementById("userEmail").innerText = `Email: ${data.email}`;
+        document.getElementById("userPhoto").src = data.photoURL;
+        document.getElementById("lastLogin").innerText = `最後登入時間: ${data.lastLogin}`;
+        document.getElementById("user-info").style.display = "block";
+      });
+    }
+  </script>
+</body>
+</html>
